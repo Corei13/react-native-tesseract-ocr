@@ -1,0 +1,43 @@
+# Uncomment this line to define a global platform for your project
+platform :ios, '9.0'
+# Uncomment this line if you're using Swift
+# use_frameworks!
+
+source 'https://github.com/CocoaPods/Specs.git'
+
+pod 'React', :path => '../node_modules/react-native', :subspecs => [
+  'Core',
+  'RCTActionSheet',
+  'RCTGeolocation',
+  'RCTImage',
+  'RCTNetwork',
+  'RCTSettings',
+  'RCTText',
+  'RCTVibration',
+  'RCTWebSocket',
+  'RCTPushNotification',
+  'RCTCameraRoll',
+]
+
+pod 'TesseractOCRiOS', '4.0.0'
+pod 'react-native-tesseract-ocr', :path => './RNTesseractOCR'
+
+target 'RNTesseractOCR' do
+end
+
+target 'RNTesseractOCRTests' do
+
+end
+
+# As of now, CocoaPods doesn't support BitCode
+post_install do |installer|
+  installer.pods_project.targets.each do |target|
+    target.build_configurations.each do |config|
+      config.build_settings['ENABLE_BITCODE'] = 'NO'
+    end
+  end
+
+  target = installer.pods_project.targets.select{|t| 'React' == t.name}.first
+  phase = target.new_shell_script_build_phase('Run Script')
+  phase.shell_script = "if nc -w 5 -z localhost 8081 ; then\n  if ! curl -s \"http://localhost:8081/status\" | grep -q \"packager-status:running\" ; then\n    echo \"Port 8081 already in use, packager is either not running or not running correctly\"\n    exit 2\n  fi\nelse\n  open $SRCROOT/../node_modules/react-native/packager/launchPackager.command || echo \"Can't start packager automatically\"\nfi"
+end
